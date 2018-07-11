@@ -4,6 +4,8 @@ const db = require('../db/index');
 const bcrypt = require('bcrypt');
 const jsonwebtoken = require('jsonwebtoken');
 const { checkCorrectUser, checkLoggedIn } = require('../middleware/auth');
+const validate = require('jsonschema').validate;
+const usersSchema = require('../schema/usersSchema');
 
 router.get('', checkLoggedIn, async function(req, res, next) {
   try {
@@ -33,8 +35,14 @@ router.get('/:id', checkLoggedIn, async function(req, res, next) {
 
 router.post('', async function(req, res, next) {
   try {
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    const validation = validate(req.body, usersSchema);
+    if (!validation.valid) {
+      const errors = validation.errors.map(err => err.stack);
+      // errors is an array of all the errors
+      return next(errors);
+    }
 
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const data = await db.query(
       'insert into users (first_name,last_name,username,password,email,photo,current_company_id) values ($1,$2,$3,$4,$5,$6,$7)',
       [
@@ -50,7 +58,12 @@ router.post('', async function(req, res, next) {
     // delete data.rows[0].password;
     return res.json(data.rows[0]);
   } catch (err) {
-    return next();
+    if (err.code === '23505') {
+      const conflict = new Error('That username is taken');
+      conflict.status = 409;
+      return next(conflict);
+    }
+    return next(err);
   }
 });
 

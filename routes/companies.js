@@ -6,7 +6,6 @@ const jsonwebtoken = require('jsonwebtoken');
 const {
   checkCorrectUser,
   checkLoggedIn,
-  checkLoggedInCompany,
   checkCorrectCompany
 } = require('../middleware/auth');
 
@@ -57,9 +56,9 @@ router.get('/:id', checkLoggedIn, async function(req, res, next) {
   }
 });
 // PATCH /companies/:id - this should update an existing company and return the updated company
-router.patch('/:id', async function(req, res, next) {
+router.patch('/:id', checkCorrectCompany, async function(req, res, next) {
   try {
-    const hashedPassword = await bcrypt(req.body.password, 10);
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const data = await db.query(
       'update companies set name=$1,logo=$2,handle=$3,password=$4 where id=$5 returning *',
       [
@@ -76,7 +75,7 @@ router.patch('/:id', async function(req, res, next) {
   }
 });
 // DELETE /companies/:id - this should remove an existing company and return the deleted company
-router.delete('/:id', async function(req, res, next) {
+router.delete('/:id', checkCorrectCompany, async function(req, res, next) {
   try {
     const data = await db.query(
       'delete from companies where id=$1 returning *',
