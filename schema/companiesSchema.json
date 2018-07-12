@@ -1,0 +1,54 @@
+{
+  "$id": "http://example.com/example.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "email": {
+      "$id": "/properties/email",
+      "type": "email",
+      "minLength": 6,
+      "maxLength": 55,
+      "title": "The Email Schema ",
+      "default": "",
+      "examples": ["gavinhooli.com"]
+    },
+    "handle": {
+      "$id": "/properties/handle",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 55,
+      "title": "The Handle Schema ",
+      "default": "",
+      "examples": ["hooli"]
+    },
+    "logo": {
+      "$id": "/properties/logo",
+      "type": "string",
+      "title": "The Logo Schema ",
+      "format": "uri",
+      "default": "",
+      "examples": [
+        "https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png"
+      ]
+    },
+    "name": {
+      "$id": "/properties/name",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 55,
+      "title": "The Name Schema ",
+      "default": "",
+      "examples": ["Hooli"]
+    },
+    "password": {
+      "$id": "/properties/password",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 55,
+      "title": "The Password Schema ",
+      "default": "",
+      "examples": ["bloodboy"]
+    }
+  },
+  "required": ["email", "handle", "name", "password"]
+}
