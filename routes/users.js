@@ -17,16 +17,16 @@ router.get('', checkLoggedIn, async function(req, res, next) {
   }
 });
 
-router.get('/:id', checkLoggedIn, async function(req, res, next) {
+router.get('/:username', checkLoggedIn, async function(req, res, next) {
   try {
-    const data = await db.query('select * from users where id=$1', [
-      req.params.id
+    const data = await db.query('select * from users where username=$1', [
+      req.params.username
     ]);
-    const jobs = await db.query(
-      'select jobs.id from jobs join jobs_users on jobs.id=jobs_users.job_id join users on users.id=jobs_users.user_id where users.id=$1 ',
-      [req.params.id]
+    const applied_to = await db.query(
+      'select * from jobs_users where username=$1 ',
+      [req.params.username]
     );
-    data.rows[0].jobs = jobs.rows.map(val => val.id);
+    data.rows[0].applied_to = applied_to.rows.map(val => val.id);
     return res.json(data.rows[0]);
   } catch (err) {
     return next(err);
@@ -44,7 +44,7 @@ router.post('', async function(req, res, next) {
 
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const data = await db.query(
-      'insert into users (first_name,last_name,username,password,email,photo,current_company_id) values ($1,$2,$3,$4,$5,$6,$7)',
+      'insert into users (first_name,last_name,username,password,email,photo,current_company) values ($1,$2,$3,$4,$5,$6,$7)',
       [
         req.body.first_name,
         req.body.last_name,
@@ -52,7 +52,7 @@ router.post('', async function(req, res, next) {
         hashedPassword,
         req.body.email,
         req.body.photo,
-        req.body.current_company_id
+        req.body.current_company
       ]
     );
     // delete data.rows[0].password;
@@ -67,18 +67,24 @@ router.post('', async function(req, res, next) {
   }
 });
 
-router.patch('/:id', checkCorrectUser, async function(req, res, next) {
+router.patch('/:username', checkCorrectUser, async function(req, res, next) {
   try {
+    const validation = validate(req.body, usersSchema);
+    if (!validation.valid) {
+      const errors = validation.errors.map(err => err.stack);
+      // errors is an array of all the errors
+      return next(errors);
+    }
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const data = await db.query(
-      'update users set username=$1,password=$2,email=$3, photo=$4,current_company_id=$5  where id=$6 returning *',
+      'update users set username=$1,password=$2,email=$3, photo=$4,current_company=$5  where username=$6 returning *',
       [
         req.body.username,
         hashedPassword,
         req.body.email,
         req.body.photo,
-        req.body.current_company_id,
-        req.params.id
+        req.body.current_company,
+        req.params.username
       ]
     );
     return res.json(data.rows[0]);
@@ -87,18 +93,19 @@ router.patch('/:id', checkCorrectUser, async function(req, res, next) {
   }
 });
 
-router.delete('/:id', checkCorrectUser, async function(req, res, next) {
+router.delete('/:username', checkCorrectUser, async function(req, res, next) {
   try {
-    const data = await db.query('delete from users where id=$1 returning *', [
-      req.params.id
-    ]);
+    const data = await db.query(
+      'delete from users where username=$1 returning *',
+      [req.params.username]
+    );
     return res.json(data.rows[0]);
   } catch (err) {
     return next(err);
   }
 });
 
-router.post('/auth', async (req, res, next) => {
+router.post('/user-auth', async (req, res, next) => {
   try {
     const foundUser = await db.query('select * from users where username=$1', [
       req.body.username
@@ -115,7 +122,7 @@ router.post('/auth', async (req, res, next) => {
     } else {
       const token = jsonwebtoken.sign(
         {
-          user_id: foundUser.rows[0].id
+          username: foundUser.rows[0].username
         },
         'SECRETK'
       );

@@ -2,59 +2,70 @@
   "$id": "http://example.com/example.json",
   "type": "object",
   "additionalProperties": false,
-  "definitions": {},
-  "$schema": "http://json-schema.org/draft-07/schema#",
   "properties": {
     "first_name": {
       "$id": "/properties/first_name",
       "type": "string",
+      "minLength": 1,
+      "maxLength": 55,
       "title": "The First_name Schema ",
       "default": "",
-      "examples": ["Cami"]
+      "examples": ["Michael"]
     },
     "last_name": {
       "$id": "/properties/last_name",
       "type": "string",
+      "minLength": 1,
+      "maxLength": 55,
       "title": "The Last_name Schema ",
       "default": "",
-      "examples": ["Gonza"]
+      "examples": ["Hueter"]
     },
     "username": {
       "$id": "/properties/username",
       "type": "string",
+      "minLength": 1,
+      "maxLength": 55,
       "title": "The Username Schema ",
       "default": "",
-      "examples": ["cami"]
-    },
-    "password": {
-      "$id": "/properties/password",
-      "type": "string",
-      "title": "The Password Schema ",
-      "default": "",
-      "examples": ["12345"]
+      "examples": ["hueter"]
     },
     "email": {
       "$id": "/properties/email",
       "type": "string",
+      "minLength": 6,
+      "maxLength": 55,
+      "format": "email",
       "title": "The Email Schema ",
       "default": "",
-      "examples": ["cami@gmail.com"]
+      "examples": ["michael@rithmschool.com"]
+    },
+    "password": {
+      "$id": "/properties/password",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 55,
+      "title": "The Password Schema ",
+      "default": "",
+      "examples": ["foo123"]
+    },
+    "current_company": {
+      "$id": "/properties/current_company",
+      "type": "null",
+      "title": "The Current_company Schema ",
+      "default": null,
+      "examples": [null]
     },
     "photo": {
       "$id": "/properties/photo",
       "type": "string",
       "title": "The Photo Schema ",
+      "format": "uri",
       "default": "",
       "examples": [
-        "https://images.pexels.com/photos/356378/pexels-photo-356378.jpeg?auto=compress&cs=tinysrgb&h=350"
+        "https://avatars0.githubusercontent.com/u/13444851?s=460&v=4"
       ]
-    },
-    "current_company_id": {
-      "$id": "/properties/current_company_id",
-      "type": "string",
-      "title": "The Current_company_id Schema ",
-      "default": "",
-      "examples": ["1"]
     }
-  }
+  },
+  "required": ["first_name", "last_name", "username", "email", "password"]
 }

@@ -23,10 +23,10 @@ CREATE TABLE users (
     password TEXT NOT NULL,
     email TEXT,
     photo TEXT,
-    current_company_id INTEGER REFERENCES companies (id) ON DELETE SET NULL
+    current_company INTEGER REFERENCES companies (handle) ON DELETE SET NULL
 );
 CREATE TABLE jobs_users (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+    username TEXT REFERENCES users (username) ON DELETE CASCADE,
     job_id INTEGER REFERENCES jobs (id) ON DELETE CASCADE
 );
