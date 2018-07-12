@@ -12,7 +12,7 @@ beforeAll(async () => {
   console.log('created users');
 
   await db.query(
-    'CREATE TABLE companies (id SERIAL PRIMARY KEY, handle TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT, logo TEXT )'
+    'CREATE TABLE companies (id SERIAL PRIMARY KEY, handle TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL, logo TEXT )'
   );
 
   await db.query(
@@ -55,7 +55,7 @@ beforeEach(async () => {
   // do the same for company "companies"
   const hashedCompanyPassword = await bcrypt.hash('secret', 1);
   await db.query(
-    "INSERT INTO companies (handle, password) VALUES ('testcompany', $1)",
+    "INSERT INTO companies (name, email, handle, password) VALUES ('testcompanyname', 'testcompanyemail', 'testcompany', $1)",
     [hashedCompanyPassword]
   );
   const companyResponse = await request(app)
@@ -94,20 +94,21 @@ describe('DELETE/users/:username', () => {
   });
 });
 
-// describe('PATCH/companies/:handle', () => {
-//   test('succesfully patch own company', async () => {
-//     const response = await request(app)
-//       .patch(`/companies/${auth.current_company_handle}`)
-//       .send({
-//         handle: 'testcompany',
-//         password: 'secret',
-//         name: 'Hooli'
-//       })
-//       .set('authorization', auth.company_token);
-//     expect(response.status).toBe(200);
-//     expect(response.body.name).toBe('Hooli');
-//   });
-// });
+describe('PATCH/companies/:handle', () => {
+  test('succesfully patch own company', async () => {
+    const response = await request(app)
+      .patch(`/companies/${auth.current_company_handle}`)
+      .send({
+        handle: 'testcompany',
+        password: 'secret',
+        name: 'Hooli'
+      })
+      .set('authorization', auth.company_token);
+    expect(response.status).toBe(200);
+    expect(response.body.name).toBe('Hooli');
+  });
+});
+
 afterEach(async () => {
   // delete the users and company users
   await db.query('DELETE FROM users');

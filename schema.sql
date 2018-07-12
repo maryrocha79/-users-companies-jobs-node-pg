@@ -3,7 +3,8 @@ CREATE DATABASE "users-companies-jobs-db";
 \c "users-companies-jobs-db"
 CREATE TABLE companies (
     id SERIAL PRIMARY KEY,
-    name TEXT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
     logo TEXT,
     handle TEXT NOT NULL,
     password TEXT NOT NULL

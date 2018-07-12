@@ -52,6 +52,7 @@ function checkCorrectUser(req, res, next) {
   }
 }
 
+//change to handle with status codes like in checkcorrectuser
 function checkCorrectCompany(req, res, next) {
   try {
     const token = req.headers.authorization;
