@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/index');
 const bcrypt = require('bcrypt');
-const jsonwebtoken = require('jsonwebtoken');
 const { checkCorrectUser, checkLoggedIn } = require('../middleware/auth');
 const validate = require('jsonschema').validate;
 const usersSchema = require('../schema/usersSchema');
@@ -46,28 +45,29 @@ router.post('', async function(req, res, next) {
         )
       );
     }
-
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    const data = await db.query(
-      'insert into users (first_name,last_name,username,password,email,photo,current_company) values ($1,$2,$3,$4,$5,$6,$7)',
-      [
-        req.body.first_name,
-        req.body.last_name,
-        req.body.username,
-        hashedPassword,
-        req.body.email,
-        req.body.photo,
-        req.body.current_company
-      ]
+    const foundUsername = await db.query(
+      'SELECT * from users WHERE username = $1',
+      [req.body.username]
     );
-    // delete data.rows[0].password;
-    return res.json(data.rows[0]);
-  } catch (err) {
-    if (err.code === '23505') {
-      const conflict = new Error('That username is taken');
-      conflict.status = 409;
-      return next(conflict);
+    if (!foundUsername.rows[0]) {
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+      const data = await db.query(
+        'INSERT INTO users (first_name, last_name, username, password, email, photo, current_company) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
+        [
+          req.body.first_name,
+          req.body.last_name,
+          req.body.username,
+          hashedPassword,
+          req.body.email,
+          req.body.photo,
+          req.body.current_company
+        ]
+      );
+      return res.json(data.rows[0]);
+    } else {
+      return next(new APIError(409, 'Conflict', 'Username is already taken'));
     }
+  } catch (err) {
     return next(err);
   }
 });

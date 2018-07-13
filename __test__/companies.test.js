@@ -150,7 +150,12 @@ describe('DELETE/companies/:handle', () => {
       .delete(`/companies/${auth.current_company_handle}`)
       .set('authorization', auth.company_token);
     expect(response.status).toBe(200);
-    <expect(response.body).toMatchObject({name:'testcompanyname', email: 'testcompanyemail', handle:'testcompany', password: 'auth.company_token'});
+    expect(response.body).toMatchObject({
+      name: 'testcompanyname',
+      email: 'testcompanyemail',
+      handle: 'testcompany'
+      // password: 'auth.company_token'
+    });
   });
 });
 
