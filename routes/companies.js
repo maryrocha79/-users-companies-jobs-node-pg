@@ -8,10 +8,20 @@ const {
   checkLoggedIn,
   checkCorrectCompany
 } = require('../middleware/auth');
+const validate = require('jsonschema').validate;
+const companiesSchema = require('../schema/companiesSchema');
+const APIError = require('../APIError');
 
 // POST /companies - this should create a new company
 router.post('', async function(req, res, next) {
   try {
+    const validation = validate(req.body, companiesSchema);
+    if (!validation.valid) {
+      const errors = validation.errors.map(err => err.stack);
+      // errors is an array of all the errors
+      return next(errors);
+    }
+
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const data = await db.query(
       'insert into companies (name,email,logo,handle,password) values($1,$2,$3,$4,$5) returning *',
@@ -39,7 +49,7 @@ router.get('', checkLoggedIn, async function(req, res, next) {
   }
 });
 
-// GET /companies/:id - this should return a single company found by its id
+// GET /companies/:handle - this should return a single company found by its id
 router.get('/:handle', checkLoggedIn, async function(req, res, next) {
   try {
     const companyData = await db.query(
@@ -61,17 +71,18 @@ router.get('/:handle', checkLoggedIn, async function(req, res, next) {
     return next(err);
   }
 });
-// PATCH /companies/:id - this should update an existing company and return the updated company
+// PATCH /companies/:handle - this should update an existing company and return the updated company
 router.patch('/:handle', checkCorrectCompany, async function(req, res, next) {
   try {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const data = await db.query(
-      'update companies set email=$1,logo=$2,handle=$3,password=$4 where handle=$5 returning *',
+      'update companies set email=$1,logo=$2,handle=$3,password=$4,name=$5 where handle=$6 returning *',
       [
         req.body.email,
         req.body.logo,
         req.body.handle,
         hashedPassword,
+        req.body.name,
         req.params.handle
       ]
     );
@@ -80,7 +91,7 @@ router.patch('/:handle', checkCorrectCompany, async function(req, res, next) {
     return next(err);
   }
 });
-// DELETE /companies/:id - this should remove an existing company and return the deleted company
+// DELETE /companies/:handle - this should remove an existing company and return the deleted company
 router.delete('/:handle', checkCorrectCompany, async function(req, res, next) {
   try {
     const data = await db.query(
@@ -88,35 +99,6 @@ router.delete('/:handle', checkCorrectCompany, async function(req, res, next) {
       [req.params.handle]
     );
     return res.json(data.rows[0]);
-  } catch (err) {
-    return next(err);
-  }
-});
-
-router.post('/auth', async (req, res, next) => {
-  try {
-    const foundCompany = await db.query(
-      'select * from companies where handle=$1',
-      [req.body.handle]
-    );
-    if (foundCompany.rows.length === 0) {
-      return res.json({ message: 'Invalid handle' });
-    }
-    const foundPassword = await bcrypt.compare(
-      req.body.password,
-      foundCompany.rows[0].password
-    );
-    if (foundPassword === false) {
-      return res.json({ message: 'Invalid Password' });
-    } else {
-      const token = jsonwebtoken.sign(
-        {
-          handle: foundCompany.rows[0].handle
-        },
-        'SECRETK'
-      );
-      return res.json({ token });
-    }
   } catch (err) {
     return next(err);
   }

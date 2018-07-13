@@ -6,6 +6,7 @@ const jsonwebtoken = require('jsonwebtoken');
 const { checkCorrectUser, checkLoggedIn } = require('../middleware/auth');
 const validate = require('jsonschema').validate;
 const usersSchema = require('../schema/usersSchema');
+const APIError = require('../APIError');
 
 router.get('', checkLoggedIn, async function(req, res, next) {
   try {
@@ -37,9 +38,13 @@ router.post('', async function(req, res, next) {
   try {
     const validation = validate(req.body, usersSchema);
     if (!validation.valid) {
-      const errors = validation.errors.map(err => err.stack);
-      // errors is an array of all the errors
-      return next(errors);
+      return next(
+        new APIError(
+          400,
+          'Bad Request',
+          validation.errors.map(e => e.stack).join('. ')
+        )
+      );
     }
 
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
@@ -100,34 +105,6 @@ router.delete('/:username', checkCorrectUser, async function(req, res, next) {
       [req.params.username]
     );
     return res.json(data.rows[0]);
-  } catch (err) {
-    return next(err);
-  }
-});
-
-router.post('/user-auth', async (req, res, next) => {
-  try {
-    const foundUser = await db.query('select * from users where username=$1', [
-      req.body.username
-    ]);
-    if (foundUser.rows.length === 0) {
-      return res.json({ message: 'Invalid username' });
-    }
-    const foundPassword = await bcrypt.compare(
-      req.body.password,
-      foundUser.rows[0].password
-    );
-    if (foundPassword === false) {
-      return res.json({ message: 'Invalid Password' });
-    } else {
-      const token = jsonwebtoken.sign(
-        {
-          username: foundUser.rows[0].username
-        },
-        'SECRETK'
-      );
-      return res.json({ token });
-    }
   } catch (err) {
     return next(err);
   }

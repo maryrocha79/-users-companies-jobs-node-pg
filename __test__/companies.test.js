@@ -67,45 +67,22 @@ beforeEach(async () => {
     });
   auth.company_token = companyResponse.body.token;
   auth.current_company_handle = jwt.decode(auth.company_token).handle;
-  await db.query(
-    "INSERT INTO jobs (title, equity, salary, company) VALUES ('FrontEng', '2.1', '130k', $1)",
-    [auth.current_company_handle]
-  );
 });
 
-describe('GET /users', () => {
-  test('gets a list of 1 user', async () => {
+describe('PATCH/companies/:handle', () => {
+  test('succesfully patch own company', async () => {
     const response = await request(app)
-      .get('/users')
-      .set('authorization', auth.token);
-    expect(response.body).toHaveLength(1);
-  });
-});
-
-// Gets one user by username
-describe('GET /users/:username', () => {
-  test('gets a user by usrname', async () => {
-    const response = await request(app)
-      .get(`/users/${auth.current_username}`)
+      .patch(`/companies/${auth.current_company_handle}`)
+      .send({
+        handle: 'testcompany1',
+        password: 'secret',
+        name: 'Hooli',
+        email: 'newemail@yahoo.com',
+        logo: 'testlogo'
+      })
       .set('authorization', auth.company_token);
-    expect(response.body.applied_to).toHaveLength(0);
-  });
-});
-
-describe('DELETE/users/:username', () => {
-  test('succesfully deletes own user', async () => {
-    const response = await request(app)
-      .delete(`/users/${auth.current_username}`)
-      .set('authorization', auth.token);
     expect(response.status).toBe(200);
-    expect(response.body.username).toBe(auth.current_username);
-  });
-  test('cannot delete other user', async () => {
-    const response = await request(app)
-      .delete(`/users/${auth.current_user_id + 1}`)
-      .set('authorization', auth.token);
-    expect(response.status).toBe(403);
-    expect(response.body.id).toBe(auth.current_user_id);
+    expect(response.body.name).toBe('Hooli');
   });
 });
 

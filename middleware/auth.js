@@ -1,4 +1,5 @@
 const jsonwebtoken = require('jsonwebtoken');
+const APIError = require('../APIError');
 
 function checkLoggedIn(req, res, next) {
   try {
@@ -14,21 +15,9 @@ function checkLoggedIn(req, res, next) {
     return next();
   } catch (err) {
     // console.log('ERR?', err);
-    return res.json({
-      message: 'You need to authenticate before accessing this resource.'
-    });
+    return next(new APIError(401, 'Unauthorized', 'You are Unauthorized'));
   }
 }
-
-// function checkLoggedInCompany(req, res, next) {
-//   try {
-//     const token = req.headers.authorization;
-//     const decodedToken = jsonwebtoken.verify(token, 'SECRETK');
-//     return next();
-//   } catch (err) {
-//     return res.json({ message: 'Unauthorized' });
-//   }
-// }
 
 function checkCorrectUser(req, res, next) {
   try {
@@ -37,18 +26,15 @@ function checkCorrectUser(req, res, next) {
     if (decodedToken.username === req.params.username) {
       return next();
     } else {
-      const forbiddenError = new Error(
+      const forbiddenError = new APIError(
+        403,
+        'forbidden',
         'You are not the right person to do that.'
       );
-      forbiddenError.status = 403;
       return next(forbiddenError);
     }
   } catch (err) {
-    const unauthorizedError = new Error(
-      'You are not authorized. You must login and use a token.'
-    );
-    unauthorizedError.status = 401;
-    return next(unauthorizedError);
+    return next(new APIError(401, 'Unauthorized', 'You are Unauthorized'));
   }
 }
 
@@ -60,10 +46,15 @@ function checkCorrectCompany(req, res, next) {
     if (decodedToken.handle === req.params.handle) {
       return next();
     } else {
-      return res.json({ message: 'Unauthorized' });
+      const forbiddenError = new APIError(
+        403,
+        'Unauthorized',
+        'You are not the right company to do that.'
+      );
+      return next(forbiddenError);
     }
   } catch (err) {
-    return res.json({ message: 'Unauthorized' });
+    return next(new APIError(401, 'Unauthorized', 'You are Unauthorized'));
   }
 }
 

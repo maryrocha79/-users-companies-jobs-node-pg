@@ -14,7 +14,7 @@ CREATE TABLE jobs (
     title TEXT,
     salary TEXT,
     equity FLOAT,
-    company_id INTEGER REFERENCES companies(id) ON DELETE CASCADE
+    company INTEGER REFERENCES companies(handle) ON DELETE CASCADE
 );
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,

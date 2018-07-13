@@ -73,39 +73,30 @@ beforeEach(async () => {
   );
 });
 
-describe('GET /users', () => {
-  test('gets a list of 1 user', async () => {
+// create a job
+describe('POST/jobs', () => {
+  test('succesfully post jobs', async () => {
     const response = await request(app)
-      .get('/users')
+      .post('/jobs')
+      .send({
+        title: 'Eng',
+        salary: '300k',
+        equity: 2.1
+      })
+      .set('authorization', auth.company_token);
+    expect(response.status).toBe(200);
+    expect(response.body.title).toBe('Eng');
+  });
+});
+
+// //jobs test
+
+describe('GET /jobs', () => {
+  test('gets a list of 1 jobs', async () => {
+    const response = await request(app)
+      .get('/jobs')
       .set('authorization', auth.token);
     expect(response.body).toHaveLength(1);
-  });
-});
-
-// Gets one user by username
-describe('GET /users/:username', () => {
-  test('gets a user by usrname', async () => {
-    const response = await request(app)
-      .get(`/users/${auth.current_username}`)
-      .set('authorization', auth.company_token);
-    expect(response.body.applied_to).toHaveLength(0);
-  });
-});
-
-describe('DELETE/users/:username', () => {
-  test('succesfully deletes own user', async () => {
-    const response = await request(app)
-      .delete(`/users/${auth.current_username}`)
-      .set('authorization', auth.token);
-    expect(response.status).toBe(200);
-    expect(response.body.username).toBe(auth.current_username);
-  });
-  test('cannot delete other user', async () => {
-    const response = await request(app)
-      .delete(`/users/${auth.current_user_id + 1}`)
-      .set('authorization', auth.token);
-    expect(response.status).toBe(403);
-    expect(response.body.id).toBe(auth.current_user_id);
   });
 });
 
