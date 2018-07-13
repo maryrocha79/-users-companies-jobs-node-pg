@@ -60,7 +60,7 @@ router.get('/:handle', checkLoggedIn, async function(req, res, next) {
       'select users.username from users where current_company=$1',
       [req.params.handle]
     );
-    const jobs = await db.query('select jobs.id from jobs where handle=$1', [
+    const jobs = await db.query('select jobs.id from jobs where company=$1', [
       req.params.handle
     ]);
 
