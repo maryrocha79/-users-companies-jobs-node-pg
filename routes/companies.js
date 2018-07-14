@@ -17,23 +17,34 @@ router.post('', async function(req, res, next) {
   try {
     const validation = validate(req.body, companiesSchema);
     if (!validation.valid) {
-      const errors = validation.errors.map(err => err.stack);
-      // errors is an array of all the errors
-      return next(errors);
+      return next(
+        new APIError(
+          400,
+          'Bad Request',
+          validation.errors.map(e => e.stack).join('. ')
+        )
+      );
     }
-
-    const hashedPassword = await bcrypt.hash(req.body.password, 10);
-    const data = await db.query(
-      'insert into companies (name,email,logo,handle,password) values($1,$2,$3,$4,$5) returning *',
-      [
-        req.body.name,
-        req.body.email,
-        req.body.logo,
-        req.body.handle,
-        hashedPassword
-      ]
+    const foundHandle = await db.query(
+      'SELECT * from companies WHERE handle = $1',
+      [req.body.handle]
     );
-    return res.json(data.rows[0]);
+    if (!foundHandle.rows[0]) {
+      const hashedPassword = await bcrypt.hash(req.body.password, 10);
+      const data = await db.query(
+        'insert into companies (name,email,logo,handle,password) values($1,$2,$3,$4,$5) returning *',
+        [
+          req.body.name,
+          req.body.email,
+          req.body.logo,
+          req.body.handle,
+          hashedPassword
+        ]
+      );
+      return res.json(data.rows[0]);
+    } else {
+      return next(new APIError(409, 'Conflict', 'Handle is already taken'));
+    }
   } catch (err) {
     return next(err);
   }

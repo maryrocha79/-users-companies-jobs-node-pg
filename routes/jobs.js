@@ -65,6 +65,16 @@ router.get('/:id', checkLoggedIn, async function(req, res, next) {
 // PATCH /jobs/:id - this route should let you update a job by its ID
 router.patch('/:id', checkLoggedIn, async function(req, res, next) {
   try {
+    const validation = validate(req.body, jobsSchema);
+    if (!validation.valid) {
+      return next(
+        new APIError(
+          400,
+          'Bad Request',
+          validation.errors.map(e => e.stack).join('. ')
+        )
+      );
+    }
     const foundJob = await db.query('select * from jobs where id=$1', [
       req.params.id
     ]);
