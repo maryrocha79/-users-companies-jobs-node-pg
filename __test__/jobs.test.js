@@ -71,9 +71,32 @@ beforeEach(async () => {
     "INSERT INTO jobs (title, equity, salary, company) VALUES ('FrontEng', '2.1', '130k', $1)",
     [auth.current_company_handle]
   );
+  console.log();
 });
 
-// create a job
+//GET gets a list of jobs
+describe('GET /jobs', () => {
+  test('gets a list of jobs', async () => {
+    const response = await request(app)
+      .get('/jobs')
+      .set('authorization', auth.token);
+    expect(response.body).toHaveLength(1);
+  });
+});
+
+//GET gets a job by id
+describe('GET /jobs/', () => {
+  test('gets a job', async () => {
+    const jobId = await db.query('SELECT jobs.id from jobs');
+    const response = await request(app)
+      .get(`/jobs/${jobId.rows[0].id}`)
+      .set('authorization', auth.token);
+    console.log(response.body);
+    expect(response.body.title).toBe('FrontEng');
+  });
+});
+
+// POST create a job
 describe('POST/jobs', () => {
   test('succesfully post jobs', async () => {
     const response = await request(app)
@@ -89,14 +112,38 @@ describe('POST/jobs', () => {
   });
 });
 
-// //jobs test
-
-describe('GET /jobs', () => {
-  test('gets a list of 1 jobs', async () => {
+//PATCH update a job
+describe('PATCH/jobs/:id', () => {
+  test('succesfully patch a job', async () => {
+    const jobId = await db.query('SELECT jobs.id from jobs');
     const response = await request(app)
-      .get('/jobs')
+      .patch(`/jobs/${jobId.rows[0].id}`)
+      .send({
+        title: 'Eng',
+        salary: '600k',
+        equity: 2.1
+      })
+      .set('authorization', auth.company_token);
+    expect(response.status).toBe(200);
+  });
+});
+
+//DELETE deletes own job
+describe('DELETE/jobs/:id', () => {
+  test('succesfully deletes own job', async () => {
+    const jobId = await db.query('SELECT jobs.id from jobs');
+    const response = await request(app)
+      .delete(`/jobs/${jobId.rows[0].id}`)
+      .set('authorization', auth.company_token);
+    expect(response.status).toBe(200);
+    expect(response.body.deleted.title).toBe('FrontEng');
+  });
+  test('cannot delete job if job is not at your company', async () => {
+    const jobId = await db.query('SELECT jobs.id from jobs');
+    const response = await request(app)
+      .delete(`/users/${jobId.rows[0].id}`)
       .set('authorization', auth.token);
-    expect(response.body).toHaveLength(1);
+    expect(response.status).toBe(403);
   });
 });
 

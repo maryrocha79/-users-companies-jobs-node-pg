@@ -38,9 +38,10 @@ beforeAll(async () => {
 beforeEach(async () => {
   // login a user, get a token, store the user ID and token
   const hashedPassword = await bcrypt.hash('secret', 1);
-  await db.query("INSERT INTO users (username, password) VALUES ('test', $1)", [
-    hashedPassword
-  ]);
+  await db.query(
+    "INSERT INTO users (username, password, first_name, last_name, email, photo) VALUES ('test', $1, 'Mary', 'Sharp', 'bestteam@yahoo.com', 'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png')",
+    [hashedPassword]
+  );
   const response = await request(app)
     .post('/user-auth')
     .send({
@@ -70,8 +71,9 @@ beforeEach(async () => {
   );
 });
 
+//GET gets list of users
 describe('GET /users', () => {
-  test('gets a list of 1 user', async () => {
+  test('gets a list of users', async () => {
     const response = await request(app)
       .get('/users')
       .set('authorization', auth.token);
@@ -79,7 +81,7 @@ describe('GET /users', () => {
   });
 });
 
-// Gets one user by username
+// GET gets one user by username
 describe('GET /users/:username', () => {
   test('gets a user by username', async () => {
     const response = await request(app)
@@ -123,6 +125,28 @@ describe('POST/users', () => {
   });
 });
 
+//PATCH updates a user
+describe('PATCH/users/:username', () => {
+  test('succesfully patch own user', async () => {
+    const response = await request(app)
+      .patch(`/users/${auth.current_username}`)
+      .send({
+        username: 'patchusername',
+        password: 'NewSecret',
+        first_name: 'Whiskey',
+        last_name: 'Dog',
+        email: 'NewUserPatch@yahoo.com',
+        photo:
+          'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png'
+      })
+      .set('authorization', auth.token);
+    console.log(response.body);
+    expect(response.status).toBe(200);
+    expect(response.body.email).toBe('NewUserPatch@yahoo.com');
+  });
+});
+
+//DELETE deletes own user
 describe('DELETE/users/:username', () => {
   test('succesfully deletes own user', async () => {
     const response = await request(app)

@@ -10,8 +10,6 @@ const APIError = require('../APIError');
 const auth = {};
 
 beforeAll(async () => {
-  console.log('created users');
-
   await db.query(
     'CREATE TABLE companies (id SERIAL PRIMARY KEY, handle TEXT UNIQUE NOT NULL, password TEXT NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL, logo TEXT )'
   );
@@ -69,7 +67,7 @@ beforeEach(async () => {
   auth.current_company_handle = jwt.decode(auth.company_token).handle;
 });
 
-//get a list of companies
+//GET get a list of companies
 describe('GET /companies', () => {
   test('gets a list of companies when a user is loggedIn', async () => {
     const response = await request(app)
@@ -91,7 +89,7 @@ describe('GET /companies', () => {
   });
 });
 
-// Gets one company by handle
+// GET gets one company by handle
 describe('GET /companies/:handle', () => {
   test('gets a company by handle', async () => {
     const response = await request(app)
@@ -107,7 +105,7 @@ describe('GET /companies/:handle', () => {
   });
 });
 
-//POST create a company
+//POST creates a company
 describe('POST/companies', () => {
   test('succesfully create a company', async () => {
     const response = await request(app)
@@ -125,8 +123,23 @@ describe('POST/companies', () => {
     expect(response.body.name).toBe('NewHooli');
     expect(response.body.handle).toBe('NewCompany1');
   });
+  test('can not create a handle that already exists', async () => {
+    const response = await request(app)
+      .post('/companies')
+      .send({
+        handle: 'testcompany',
+        password: 'NewSecret',
+        name: 'NewHooli',
+        email: 'NewCompany@yahoo.com',
+        logo:
+          'https://assets-cdn.github.com/images/modules/logos_page/GitHub-Mark.png'
+      });
+    // .set('authorization', auth.company_token);
+    expect(response.status).toBe(409);
+  });
 });
 
+//PATCH updates a company
 describe('PATCH/companies/:handle', () => {
   test('succesfully patch own company', async () => {
     const response = await request(app)
@@ -144,6 +157,7 @@ describe('PATCH/companies/:handle', () => {
   });
 });
 
+//DELETE deletes a company
 describe('DELETE/companies/:handle', () => {
   test('succesfully deletes own company', async () => {
     const response = await request(app)
@@ -154,7 +168,6 @@ describe('DELETE/companies/:handle', () => {
       name: 'testcompanyname',
       email: 'testcompanyemail',
       handle: 'testcompany'
-      // password: 'auth.company_token'
     });
   });
 });

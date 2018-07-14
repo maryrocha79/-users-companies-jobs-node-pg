@@ -76,16 +76,22 @@ router.patch('/:username', checkCorrectUser, async function(req, res, next) {
   try {
     const validation = validate(req.body, usersSchema);
     if (!validation.valid) {
-      const errors = validation.errors.map(err => err.stack);
-      // errors is an array of all the errors
-      return next(errors);
+      return next(
+        new APIError(
+          400,
+          'Bad Request',
+          validation.errors.map(e => e.stack).join('. ')
+        )
+      );
     }
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const data = await db.query(
-      'update users set username=$1,password=$2,email=$3, photo=$4,current_company=$5  where username=$6 returning *',
+      'update users set username=$1,password=$2,first_name=$3, last_name=$4, email=$5, photo=$6,current_company=$7  where username=$8 returning *',
       [
         req.body.username,
         hashedPassword,
+        req.body.first_name,
+        req.body.last_name,
         req.body.email,
         req.body.photo,
         req.body.current_company,
