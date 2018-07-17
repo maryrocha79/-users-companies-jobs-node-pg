@@ -85,7 +85,7 @@ describe('GET /jobs', () => {
 });
 
 //GET gets a job by id
-describe('GET /jobs/', () => {
+describe('GET /jobs/:id', () => {
   test('gets a job', async () => {
     const jobId = await db.query('SELECT jobs.id from jobs');
     const response = await request(app)
@@ -144,6 +144,19 @@ describe('DELETE/jobs/:id', () => {
       .delete(`/users/${jobId.rows[0].id}`)
       .set('authorization', auth.token);
     expect(response.status).toBe(403);
+  });
+});
+
+//GET gets a job application
+describe('GET /jobs/:id/application', () => {
+  test('gets a job', async () => {
+    const jobId = await db.query('SELECT jobs.id from jobs');
+    const response = await request(app)
+      .get(`/jobs/${jobId.rows[0].id}`)
+      .set('authorization', auth.token);
+    console.log(response.body);
+    expect(response.status).toBe(200);
+    // expect(response.body.username).toBe('test');
   });
 });
 

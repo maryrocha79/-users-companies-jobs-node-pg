@@ -127,7 +127,7 @@ router.delete('/:id', checkLoggedIn, async function(req, res, next) {
 });
 
 //Apply to a job by its id, the username is collected from the token. No POST body required.
-router.post('/:id/apply', checkLoggedIn, async (req, res, next) => {
+router.post('/:id/applications', checkLoggedIn, async (req, res, next) => {
   try {
     const foundJob = await db.query('select * from jobs where id=$1', [
       req.params.id
@@ -151,8 +151,76 @@ router.post('/:id/apply', checkLoggedIn, async (req, res, next) => {
   }
 });
 
+//Auth Required. Company must be the company that listed the job. User must be user that applied for the job.. Get a list of job applications, based on the logged in user or company. Users can only see job applications they submitted. Companies can only see job applications for jobs they listed.
+router.get('/:id/applications', checkLoggedIn, async (req, res, next) => {
+  try {
+    if (req.username) {
+      const foundApplications = await db.query(
+        'select * from jobs_users where username=$1 returning *',
+        [req.username]
+      );
+      return res.json(foundApplications.rows[0]);
+    } else {
+      const foundJobsPosted = await db.query(
+        'SELECT users.username FROM users JOIN jobs_users ON users.username=jobs_users.username JOIN jobs ON jobs.id=jobs_users.jobs_id WHERE jobs.handle=$1',
+        [req.handle]
+        // 'select * from jobs_users where job_id=$1 returning *',
+      );
+    }
+  } catch (err) {
+    return next(err);
+  }
+});
+
+// Auth Required. Correct User/Company Required.. A user or company may view an application by its ID.
+router.get(
+  '/:job_id/applications/:application_id',
+  checkLoggedIn,
+  async (req, res, next) => {
+    try {
+      if (req.username) {
+        const foundApplication = await db.query(
+          'select * from jobs_users where job_id=$1 and id=$2 returning *',
+          [req.params.job_id, req.params.application_id]
+        );
+        if (req.username === foundApplication.username) {
+          return res.json(foundApplication.rows[0]);
+        } else {
+          const forbiddenError = new APIError(
+            403,
+            'forbidden',
+            'You are not the right person to do that.'
+          );
+          return next(forbiddenError);
+        }
+      } else {
+        const foundJobsPosted = await db.query(
+          'select * from jobs where id=$1 and company=$2 returning * ',
+          [req.job_id, req.handle]
+        );
+        if (foundJobsPosted.rows[0]) {
+          const foundApplications = await db.query(
+            'select * from jobs_users where job_id=$1 and id =$2 returning *',
+            [req.params.job_id, req.params.application_id]
+          );
+          return res.json(foundApplications.rows[0]);
+        } else {
+          const forbiddenError = new APIError(
+            403,
+            'forbidden',
+            'You are not the right person to do that.'
+          );
+          return next(forbiddenError);
+        }
+      }
+    } catch (err) {
+      return next(err);
+    }
+  }
+);
+
 //Auth Required. Correct User/Company Required.. A user may withdraw their application, or a company may delete it.
-router.delete('/:id/apply', checkLoggedIn, async (req, res, next) => {
+router.delete('/:id/applications', checkLoggedIn, async (req, res, next) => {
   try {
     const foundJob = await db.query('select * from jobs where id=$1', [
       req.params.id
