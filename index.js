@@ -16,6 +16,12 @@ app.use('/companies', companyRoutes);
 app.use('/jobs', jobRoutes);
 app.use(authRoutes);
 
+// catch 404 and forward to error handler
+app.use((req, res, next) => {
+  const err = new Error('Not Found');
+  err.status = 404;
+  return next(err); // pass the error to the next piece of middleware
+});
 /* 
   error handler - for a handler with four parameters, 
   the first is assumed to be an error passed by another

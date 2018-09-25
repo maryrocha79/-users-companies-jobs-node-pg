@@ -6,7 +6,7 @@ CREATE TABLE companies (
     name TEXT NOT NULL,
     email TEXT NOT NULL,
     logo TEXT,
-    handle TEXT NOT NULL,
+    handle TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL
 );
 CREATE TABLE jobs (
@@ -14,7 +14,7 @@ CREATE TABLE jobs (
     title TEXT,
     salary TEXT,
     equity FLOAT,
-    company INTEGER REFERENCES companies(handle) ON DELETE CASCADE
+    company TEXT REFERENCES companies(handle) ON DELETE CASCADE
 );
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -24,7 +24,7 @@ CREATE TABLE users (
     password TEXT NOT NULL,
     email TEXT,
     photo TEXT,
-    current_company INTEGER REFERENCES companies (handle) ON DELETE SET NULL
+    current_company TEXT REFERENCES companies (handle) ON DELETE SET NULL
 );
 CREATE TABLE jobs_users (
     id SERIAL PRIMARY KEY,
